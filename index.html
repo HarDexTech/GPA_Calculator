@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FUTA GPA Calculator</title>
+    <style>
+        *{font-weight: 800;}
+        h1{text-align: center; font-size: 3em; font-family:Arial, Helvetica, sans-serif; font-weight: 700;}
+        .container{display: flex;}
+        body { font-family: Arial, sans-serif; max-width: 700px; margin: 0 auto; padding: 20px;}
+        table { width: 100%; border-collapse: collapse; margin: 20px 0;}
+        th, td { border: 1px solid #ddd; padding: 8px;}
+        th { background-color: #f2f2f2; font-size: 1.2em;}
+        button { padding: 8px 16px; background-color: #1a5276; color: white; border: none; cursor: pointer;}
+        button:hover { background-color: blue; transition: all .5s ease-in-out;}
+        .result { font-size: 1.2em; font-weight: bold; margin: 20px 0;}
+        .info { background-color: #eaf2f8; border-radius: 15px; filter: drop-shadow(2px 4px 6px black); display: flex; flex-direction: column; align-items: center;}
+        .optional { color: #666; font-style: italic;}
+        #add-course, #calculate {width: 200px; height: 50px; border-radius: 30px; font-size: 18px; font-weight: bold;}
+        .btn{display: flex;align-items: center;gap: 20px;justify-content: center;}
+        .title{display: flex; align-items: center;}
+        .remove-btn{font-weight: 800; display: flex; align-items: center; border-radius: 20px; width: 100px; justify-content: center; height: 40px;}
+        h3 {font-size: x-large;}
+        img{animation: img-animate 1.5s infinite alternate-reverse;}
+        @keyframes img-animate{from{transform: translateY(0);} to{transform: translateY(10px);}}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo"><img src="logo.png" alt=""></div>
+        <div class="title"><h1>FUTA GPA Calculator</h1></div>
+    </div>
+    
+    <div class="info">
+        <h3>FUTA Grading System</h3>
+        <p>A = 5.0 | B = 4.0 | C = 3.0 | D = 2.0 | F = 0.0</p>
+    </div>
+    
+    <table id="courses">
+        <thead>
+            <tr>
+                <th>Course Title <span class="optional">(optional)</span></th>
+                <th>Course Unit</th>
+                <th>Grade</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Rows will be added by JavaScript -->
+        </tbody>
+    </table>
+    
+    <div class="btn">
+        <button id="add-course">Add Course</button>
+        <button id="calculate">Calculate GPA</button>
+    </div>
+    
+    <div class="result" id="result"></div>
+
+    <script>
+        // Function to create a new course row
+        function createCourseRow() {
+            const row = document.createElement('tr');
+            
+            // Course Title cell (optional)
+            const titleCell = document.createElement('td');
+            const titleInput = document.createElement('input');
+            titleInput.type = 'text';
+            titleInput.className = 'course-title';
+            titleInput.placeholder = 'e.g. MEE 301';
+            titleCell.appendChild(titleInput);
+            
+            // Course Unit cell
+            const unitCell = document.createElement('td');
+            const unitInput = document.createElement('input');
+            unitInput.type = 'number';
+            unitInput.className = 'course-unit';
+            unitInput.min = '1';
+            unitInput.value = '2';
+            unitCell.appendChild(unitInput);
+            
+            // Grade cell
+            const gradeCell = document.createElement('td');
+            const gradeSelect = document.createElement('select');
+            gradeSelect.className = 'course-grade';
+            ['A (5.0)', 'B (4.0)', 'C (3.0)', 'D (2.0)', 'F (0.0)'].forEach(grade => {
+                const option = document.createElement('option');
+                option.value = grade.split(' ')[1].replace(/[()]/g, '');
+                option.textContent = grade;
+                gradeSelect.appendChild(option);
+            });
+            gradeCell.appendChild(gradeSelect);
+            
+            // Action cell
+            const actionCell = document.createElement('td');
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'remove-btn';
+            removeBtn.textContent = 'Remove';
+            removeBtn.addEventListener('click', function() {
+                row.remove();
+            });
+            actionCell.appendChild(removeBtn);
+            
+            // Append all cells to row
+            row.appendChild(titleCell);
+            row.appendChild(unitCell);
+            row.appendChild(gradeCell);
+            row.appendChild(actionCell);
+            
+            return row;
+        }
+
+        // Initialize table with 3 rows
+        const tbody = document.querySelector('#courses tbody');
+        for (let i = 0; i < 3; i++) {
+            const row = createCourseRow();
+            // Disable remove button for first row
+            if (i === 0) {
+                row.querySelector('.remove-btn').disabled = true;
+            }
+            tbody.appendChild(row);
+        }
+
+        // Add course row
+        document.getElementById('add-course').addEventListener('click', function() {
+            const row = createCourseRow();
+            tbody.appendChild(row);
+        });
+
+        // Calculate GPA
+        document.getElementById('calculate').addEventListener('click', function() {
+            const rows = document.querySelectorAll('#courses tbody tr');
+            let totalQualityPoints = 0;
+            let totalUnits = 0;
+            let courseList = [];
+            
+            rows.forEach(row => {
+                const title = row.querySelector('.course-title').value || 'Untitled Course';
+                const units = parseFloat(row.querySelector('.course-unit').value) || 0;
+                const gradePoint = parseFloat(row.querySelector('.course-grade').value) || 0;
+                
+                totalQualityPoints += units * gradePoint;
+                totalUnits += units;
+                courseList.push({
+                    title: title,
+                    units: units,
+                    grade: row.querySelector('.course-grade').selectedOptions[0].textContent.split(' ')[0],
+                    points: gradePoint
+                });
+            });
+            
+            const gpa = totalUnits > 0 ? (totalQualityPoints / totalUnits) : 0;
+            
+            // Create result output
+            let resultHTML = `<strong>Your GPA is: ${gpa.toFixed(2)}</strong>`;
+            
+            // Optional: Add course breakdown
+            resultHTML += `<div style="margin-top: 15px;"><details><summary>Course Details</summary>`;
+            resultHTML += `<table style="width: 100%; margin-top: 10px;">`;
+            resultHTML += `<tr><th>Course</th><th>Units</th><th>Grade</th><th>Points</th></tr>`;
+            
+            courseList.forEach(course => {
+                resultHTML += `<tr>
+                    <td>${course.title}</td>
+                    <td>${course.units}</td>
+                    <td>${course.grade}</td>
+                    <td>${course.points.toFixed(1)}</td>
+                </tr>`;
+            });
+            
+            resultHTML += `</table></details></div>`;
+            document.getElementById('result').innerHTML = resultHTML;
+        });
+    </script>
+</body>
+</html>
